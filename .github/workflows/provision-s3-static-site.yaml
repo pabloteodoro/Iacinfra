@@ -10,14 +10,19 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: sa-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
 
       - name: Extract Bucket Name From Issue
         run: |
@@ -25,10 +30,13 @@ jobs:
           echo "Bucket Name: $BUCKET_NAME"
           echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
 
+      - name: Verify AWS credentials
+        run: |
+          aws sts get-caller-identity
+
       - name: Run Terraform
         run: |
-          cd terraform
-          cd s3-bucket-static
+          cd terraform/s3-bucket-static
           terraform init
           terraform apply -auto-approve -var "bucket_name=${{ env.BUCKET_NAME }}"
           
